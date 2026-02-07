@@ -1,0 +1,57 @@
+{
+  "manifest_version": 3,
+  "name": "Scroll Rack",
+  "version": "0.1.0",
+  "description": "Connect your physical card locations with your EchoMTG inventory for gathering cards to build decks and sell.",
+  "permissions": ["storage"],
+  "host_permissions": [
+    "https://echomtg.com/*",
+    "https://www.echomtg.com/*",
+    "https://api.echomtg.com/*"
+  ],
+  "background": {
+    "service_worker": "src/background/index.js",
+    "type": "module"
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_title": "Scroll Rack",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://echomtg.com/*",
+        "https://www.echomtg.com/*"
+      ],
+      "js": ["src/content-scripts/main.js"],
+      "css": [],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["assets/content.css"],
+      "matches": [
+        "https://echomtg.com/*",
+        "https://www.echomtg.com/*"
+      ]
+    }
+  ],
+  "commands": {
+    "_execute_action": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+E"
+      },
+      "description": "Toggle Scroll Rack overlay"
+    }
+  }
+}
