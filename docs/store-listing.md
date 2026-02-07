@@ -3,7 +3,7 @@
 ## Name
 Scroll Rack
 
-## Short Description (132 chars max)
+## Short Description
 Connect your physical MTG card storage with EchoMTG. Track locations, add cards fast, and generate retrieval plans for deck building.
 
 ## Description

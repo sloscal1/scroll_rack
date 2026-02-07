@@ -86,7 +86,7 @@ We may update this privacy policy from time to time. Changes will be noted by up
 
 ## Contact
 
-For questions about this privacy policy or the extension, please open an issue at the project repository.
+For questions about this privacy policy or the extension, please open an issue at the [project repository](https://github.com/sloscal1/scroll_rack).
 
 ## Compliance
 

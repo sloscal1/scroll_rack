@@ -6,8 +6,8 @@
  */
 
 import { execSync } from "node:child_process";
-import { readFileSync, existsSync } from "node:fs";
-import { resolve, dirname } from "node:path";
+import { existsSync, readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -22,7 +22,7 @@ if (!existsSync(distDir)) {
 const pkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
 const zipName = `scroll-rack-v${pkg.version}.zip`;
 
-execSync(`cd "${distDir}" && zip -r "../../${zipName}" . -x '*.DS_Store'`, {
+execSync(`cd "${distDir}" && mkdir -p "../../release/" && zip -r "../release/${zipName}" . -x '*.DS_Store'`, {
   stdio: "inherit",
 });
 
