@@ -22,7 +22,7 @@ if (!existsSync(distDir)) {
 const pkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
 const zipName = `scroll-rack-v${pkg.version}.zip`;
 
-execSync(`cd "${distDir}" && mkdir -p "../../release/" && zip -r "../release/${zipName}" . -x '*.DS_Store'`, {
+execSync(`cd "${distDir}" && mkdir -p "../../release/" && zip -r "../../release/${zipName}" . -x '*.DS_Store'`, {
   stdio: "inherit",
 });
 
