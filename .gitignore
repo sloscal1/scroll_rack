@@ -2,8 +2,6 @@ node_modules/
 dist/
 coverage/
 *.zip
-!release/*.zip
-
 .DS_Store
 *.log
 .env
