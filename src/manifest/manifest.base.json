@@ -39,7 +39,11 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["assets/content.css"],
+      "resources": [
+        "assets/content.css",
+        "assets/content-light.css",
+        "icons/*.png"
+      ],
       "matches": [
         "https://echomtg.com/*",
         "https://www.echomtg.com/*"

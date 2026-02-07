@@ -87,6 +87,7 @@ scroll-rack/
     content-scripts/    # Content script (in-page overlay UI)
       main.js           # Shadow DOM UI and event handlers
       content.css       # Overlay styles
+      content-light.css # Light overlay styles
     shared/             # Shared libraries
       browser-api.js    # Cross-browser API wrapper
       card-db.js        # IndexedDB operations

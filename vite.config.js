@@ -17,6 +17,10 @@ function copyStaticAssets() {
         "src/content-scripts/content.css",
         resolve(dist, "assets/content.css"),
       );
+      cpSync(
+        "src/content-scripts/content-light.css",
+        resolve(dist, "assets/content-light.css"),
+      );
     },
   };
 }

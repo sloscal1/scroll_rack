@@ -33,7 +33,7 @@ import {
 
 
 const DB_NAME = "echomtg_fast_inventory";
-const DB_VERSION = 5;
+const DB_VERSION = 6;
 
 /** @type {IDBDatabase|null} */
 let _db = null;
@@ -70,8 +70,8 @@ function openDB() {
         db.createObjectStore("state", { keyPath: "key" });
       }
 
-      // Upgrade to version 2 - add search indexes
-      if (oldVersion >= 1 && oldVersion < 2) {
+      // Version 2 - add search indexes (also needed on fresh install)
+      if (oldVersion < 2) {
         try {
           const cards = req.transaction.objectStore("cards");
 
@@ -136,6 +136,20 @@ function openDB() {
           }
         }
       }
+
+      // Version 6 - ensure search indexes exist (repairs DBs that jumped
+      // from v0 to v5 under the old migration that required oldVersion >= 1)
+      if (oldVersion < 6) {
+        const cards = req.transaction.objectStore("cards");
+        if (!cards.indexNames.contains("by_initials")) {
+          cards.createIndex("by_initials", "initials", { unique: false });
+          console.log("[db] v6 repair: added missing by_initials index");
+        }
+        if (!cards.indexNames.contains("by_search_normalized")) {
+          cards.createIndex("by_search_normalized", "search_normalized", { unique: false });
+          console.log("[db] v6 repair: added missing by_search_normalized index");
+        }
+      }
     };
 
     req.onsuccess = () => {
@@ -169,6 +183,49 @@ function txComplete(tx) {
     tx.onerror = () => reject(tx.error || new Error("Transaction aborted"));
     tx.onabort = () => reject(tx.error || new Error("Transaction aborted"));
   });
+}
+
+// ---------------------------------------------------------------------------
+// Inventory search matching (on-the-fly, no pre-computed indexes)
+// ---------------------------------------------------------------------------
+
+/**
+ * Build a matcher function for inventory records based on search intent.
+ * Inventory records don't have pre-computed initials/tokens, so we derive
+ * them from the card name at match time.
+ *
+ * @param {object} intent - Result of detectSearchIntent()
+ * @param {string} rawQuery - Original user input
+ * @returns {function(object): boolean}
+ */
+function inventoryMatcher(intent, rawQuery) {
+  const q = rawQuery.trim().toLowerCase();
+
+  switch (intent.strategy) {
+    case "initials":
+    case "space_initials": {
+      const initials = intent.query; // already lowercased
+      return (rec) => {
+        const cardInitials = generateInitials(rec.name || "");
+        return cardInitials.startsWith(initials);
+      };
+    }
+
+    case "multi_token": {
+      const tokens = intent.tokens;
+      return (rec) => {
+        const cardTokens = extractTokens(rec.name || "");
+        return matchesTokenPrefixes(tokens, cardTokens);
+      };
+    }
+
+    case "prefix":
+      return (rec) => rec.name_lower.startsWith(q);
+
+    default:
+      // Fallback to substring
+      return (rec) => rec.name_lower.includes(q);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -821,7 +878,10 @@ const CardDB = {
   },
 
   /**
-   * Search inventory by card name (substring match).
+   * Search inventory by card name with intent-aware matching.
+   *
+   * Supports initials ("SG" → "Sliver Gravemother"), token prefixes
+   * ("sliv grav"), and substring fallback.
    *
    * @param {string} query
    * @param {number} [maxResults=50]
@@ -830,7 +890,9 @@ const CardDB = {
   async searchInventory(query, maxResults = 50) {
     if (!query || !query.trim()) return [];
 
-    const q = query.trim().toLowerCase();
+    const intent = detectSearchIntent(query);
+    const matcher = inventoryMatcher(intent, query);
+
     const db = await openDB();
     const tx = db.transaction("inventory", "readonly");
     const store = tx.objectStore("inventory");
@@ -845,7 +907,7 @@ const CardDB = {
           return;
         }
         const rec = cursor.value;
-        if (rec.name_lower.includes(q)) {
+        if (matcher(rec)) {
           results.push(rec);
         }
         cursor.continue();
@@ -1029,7 +1091,9 @@ const CardDB = {
   async searchInventoryFiltered(query, filters = {}, maxResults = 50) {
     if (!query || !query.trim()) return [];
 
-    const q = query.trim().toLowerCase();
+    const intent = detectSearchIntent(query);
+    const matcher = inventoryMatcher(intent, query);
+
     const db = await openDB();
     const tx = db.transaction("inventory", "readonly");
     const store = tx.objectStore("inventory");
@@ -1044,7 +1108,7 @@ const CardDB = {
           return;
         }
         const rec = cursor.value;
-        if (rec.name_lower.includes(q) && this._matchesFilters(rec, filters)) {
+        if (matcher(rec) && this._matchesFilters(rec, filters)) {
           results.push(rec);
         }
         cursor.continue();

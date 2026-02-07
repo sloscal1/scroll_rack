@@ -19,7 +19,7 @@ const shadow = HOST.attachShadow({ mode: "closed" });
 
 const styleLink = document.createElement("link");
 styleLink.rel = "stylesheet";
-styleLink.href = chrome.runtime.getURL("assets/content.css");
+styleLink.href = chrome.runtime.getURL("assets/content-light.css");
 shadow.appendChild(styleLink);
 
 // ---------------------------------------------------------------------------
@@ -100,12 +100,16 @@ function buildUI() {
   const container = document.createElement("div");
   container.innerHTML = `
     <!-- Collapsed tab -->
-    <div class="overlay-tab" id="overlay-tab">⚡ Echo</div>
+    <div class="overlay-tab" id="overlay-tab">
+      <img src="${chrome.runtime.getURL("icons/icon16.png")}" alt="Scroll Rack" class="overlay-tab-icon">
+      Scroll Rack
+    </div>
 
     <!-- Expanded panel -->
     <div class="overlay-panel hidden" id="overlay-panel">
       <div class="overlay-header">
-        <span class="overlay-title">⚡ Fast Inventory</span>
+        <img src="${chrome.runtime.getURL("icons/icon48.png")}" alt="Scroll Rack" class="overlay-icon">
+        <span class="overlay-title">Scroll Rack</span>
         <button class="collapse-btn" id="collapse-btn" title="Collapse (Ctrl+Shift+E)">−</button>
       </div>
 
@@ -192,26 +196,45 @@ function buildUI() {
                      title="Insert divider every N cards (0 = off)">
             </div>
 
-            <div class="options-bar">
-              <label>Foil</label>
-              <select class="option-select" id="foil-select">
-                <option value="0" selected>Regular</option>
-                <option value="1">Foil</option>
-              </select>
-              <label>Lang</label>
-              <select class="option-select" id="lang-select">
-                <option value="EN" selected>English</option>
-                <option value="JA">Japanese</option>
-                <option value="ZHS">Chinese (S)</option>
-                <option value="ZHT">Chinese (T)</option>
-                <option value="FR">French</option>
-                <option value="DE">German</option>
-                <option value="IT">Italian</option>
-                <option value="KO">Korean</option>
-                <option value="PT">Portuguese</option>
-                <option value="RU">Russian</option>
-                <option value="ES">Spanish</option>
-              </select>
+            <div class="checkout-search-filters" id="add-card-filters">
+              <div class="filter-multi" id="add-filter-version-wrap">
+                <button class="filter-multi-btn" id="add-filter-version-btn">Version</button>
+                <div class="filter-multi-menu hidden" id="add-filter-version-menu">
+                  <label><input type="checkbox" value="regular"> Regular</label>
+                  <label><input type="checkbox" value="foil"> Foil</label>
+                  <label><input type="checkbox" value="Anime"> Anime</label>
+                  <label><input type="checkbox" value="Borderless"> Borderless</label>
+                  <label><input type="checkbox" value="Poster"> Poster</label>
+                  <label><input type="checkbox" value="Etched"> Etched</label>
+                  <label><input type="checkbox" value="Extended Art"> Extended Art</label>
+                  <label><input type="checkbox" value="Galaxy Foil"> Galaxy Foil</label>
+                  <label><input type="checkbox" value="Gilded Foil"> Gilded Foil</label>
+                  <label><input type="checkbox" value="Retro Frame"> Retro</label>
+                  <label><input type="checkbox" value="Showcase"> Showcase</label>
+                  <label><input type="checkbox" value="Step-And-Compleat Foil"> Step-and-Compleat</label>
+                </div>
+              </div>
+              <div class="filter-multi" id="add-filter-set-wrap">
+                <button class="filter-multi-btn" id="add-filter-set-btn">Set</button>
+                <div class="filter-multi-menu hidden" id="add-filter-set-menu"></div>
+              </div>
+              <div class="filter-multi" id="add-filter-lang-wrap">
+                <button class="filter-multi-btn" id="add-filter-lang-btn">Language</button>
+                <div class="filter-multi-menu hidden" id="add-filter-lang-menu">
+                  <label><input type="checkbox" value="EN"> English</label>
+                  <label><input type="checkbox" value="JA"> Japanese</label>
+                  <label><input type="checkbox" value="ZHS"> Chinese (S)</label>
+                  <label><input type="checkbox" value="ZHT"> Chinese (T)</label>
+                  <label><input type="checkbox" value="FR"> French</label>
+                  <label><input type="checkbox" value="DE"> German</label>
+                  <label><input type="checkbox" value="IT"> Italian</label>
+                  <label><input type="checkbox" value="KO"> Korean</label>
+                  <label><input type="checkbox" value="PT"> Portuguese</label>
+                  <label><input type="checkbox" value="RU"> Russian</label>
+                  <label><input type="checkbox" value="ES"> Spanish</label>
+                  <label><input type="checkbox" value="PH"> Phyrexian</label>
+                </div>
+              </div>
             </div>
 
             <div class="divider-alert hidden" id="divider-alert">
@@ -428,8 +451,15 @@ const clearAllBtn = $("#clear-all-btn");
 const locInput = $("#loc-input");
 const posInput = $("#pos-input");
 const divInput = $("#div-input");
-const foilSelect = $("#foil-select");
-const langSelect = $("#lang-select");
+const addFilterVersionBtn = $("#add-filter-version-btn");
+const addFilterVersionMenu = $("#add-filter-version-menu");
+const addFilterVersionWrap = $("#add-filter-version-wrap");
+const addFilterSetBtn = $("#add-filter-set-btn");
+const addFilterSetMenu = $("#add-filter-set-menu");
+const addFilterSetWrap = $("#add-filter-set-wrap");
+const addFilterLangBtn = $("#add-filter-lang-btn");
+const addFilterLangMenu = $("#add-filter-lang-menu");
+const addFilterLangWrap = $("#add-filter-lang-wrap");
 const dividerAlert = $("#divider-alert");
 const dividerAlertText = $("#divider-alert-text");
 const searchInput = $("#search-input");
@@ -897,6 +927,7 @@ async function refreshCachedSets() {
 
   hasCachedSets = cachedSetsMap.size > 0;
   renderCachedData();
+  populateAddCardSetFilter();
 }
 
 function renderCachedData() {
@@ -999,13 +1030,6 @@ divInput.addEventListener("change", () => {
   chrome.runtime.sendMessage({ type: "SET_STATE", key: "dividerEvery", value: Number(divInput.value) });
   checkDividerAlert();
 });
-foilSelect.addEventListener("change", () => {
-  chrome.runtime.sendMessage({ type: "SET_STATE", key: "foil", value: Number(foilSelect.value) });
-});
-langSelect.addEventListener("change", () => {
-  chrome.runtime.sendMessage({ type: "SET_STATE", key: "language", value: langSelect.value });
-});
-
 // ---------------------------------------------------------------------------
 // Initialisation — load persisted state & determine phase
 // ---------------------------------------------------------------------------
@@ -1032,10 +1056,7 @@ async function loadState() {
         "locationTag",
         "position",
         "dividerEvery",
-        "foil",
-        "language",
         "defaultCondition",
-        "defaultLanguage",
       ],
     });
 
@@ -1044,10 +1065,7 @@ async function loadState() {
       if (v.locationTag != null) locInput.value = v.locationTag;
       if (v.position != null) posInput.value = v.position;
       if (v.dividerEvery != null) divInput.value = v.dividerEvery;
-      if (v.foil != null) foilSelect.value = String(v.foil);
       if (v.defaultCondition) defaultCondition = v.defaultCondition;
-      const lang = v.language || v.defaultLanguage;
-      if (lang) langSelect.value = lang;
     }
   } catch (err) {
     console.error("[overlay] Failed to load state:", err);
@@ -1155,7 +1173,7 @@ async function doSearch(query) {
     });
 
     if (result?.ok) {
-      results = result.cards || [];
+      results = applyAddCardFilters(result.cards || []);
       selectedIndex = results.length > 0 ? 0 : -1;
       renderResults();
       if (results.length === 0) {
@@ -1310,9 +1328,9 @@ async function addSelectedCard() {
   const result = await chrome.runtime.sendMessage({
     type: "ADD_CARD",
     emid: card.emid,
-    foil: Number(foilSelect.value),
+    foil: card.is_foil_variant ? 1 : 0,
     condition: defaultCondition,
-    language: langSelect.value,
+    language: getAddCardLanguage(),
     locationTag: locInput.value,
     position: Number(posInput.value),
   });
@@ -1593,7 +1611,7 @@ checkoutLoadListBtn.addEventListener("click", async () => {
 
 // --- Multi-select filter dropdowns ---
 
-function setupFilterDropdown(btn, menu, wrap) {
+function setupFilterDropdown(btn, menu, wrap, onChange) {
   btn.addEventListener("click", (e) => {
     e.stopPropagation();
     // Close other open menus
@@ -1605,7 +1623,7 @@ function setupFilterDropdown(btn, menu, wrap) {
 
   menu.addEventListener("change", () => {
     updateFilterBtnLabel(btn, menu, btn.dataset.label || btn.textContent);
-    rerunCheckoutSearch();
+    if (onChange) onChange();
   });
 
   // Prevent menu clicks from closing
@@ -1626,14 +1644,23 @@ function updateFilterBtnLabel(btn, menu, defaultLabel) {
   }
 }
 
-// Store default labels
+// Store default labels — Move filters
 filterVersionBtn.dataset.label = "Version";
 filterSetBtn.dataset.label = "Set";
 filterLangBtn.dataset.label = "Language";
 
-setupFilterDropdown(filterVersionBtn, filterVersionMenu, filterVersionWrap);
-setupFilterDropdown(filterSetBtn, filterSetMenu, filterSetWrap);
-setupFilterDropdown(filterLangBtn, filterLangMenu, filterLangWrap);
+setupFilterDropdown(filterVersionBtn, filterVersionMenu, filterVersionWrap, rerunCheckoutSearch);
+setupFilterDropdown(filterSetBtn, filterSetMenu, filterSetWrap, rerunCheckoutSearch);
+setupFilterDropdown(filterLangBtn, filterLangMenu, filterLangWrap, rerunCheckoutSearch);
+
+// Store default labels — Add Cards filters
+addFilterVersionBtn.dataset.label = "Version";
+addFilterSetBtn.dataset.label = "Set";
+addFilterLangBtn.dataset.label = "Language";
+
+setupFilterDropdown(addFilterVersionBtn, addFilterVersionMenu, addFilterVersionWrap, rerunAddCardsSearch);
+setupFilterDropdown(addFilterSetBtn, addFilterSetMenu, addFilterSetWrap, rerunAddCardsSearch);
+setupFilterDropdown(addFilterLangBtn, addFilterLangMenu, addFilterLangWrap, rerunAddCardsSearch);
 
 // Close all filter menus when clicking outside
 shadow.addEventListener("click", () => {
@@ -1666,6 +1693,64 @@ function getCheckoutFilters() {
   }
 
   return filters;
+}
+
+// --- Add Cards filter helpers ---
+
+function getAddCardFilters() {
+  const filters = {};
+  const versions = getCheckedValues(addFilterVersionMenu);
+  if (versions.length > 0) filters.versions = versions;
+  const sets = getCheckedValues(addFilterSetMenu);
+  if (sets.length > 0) filters.set_codes = sets;
+  const langs = getCheckedValues(addFilterLangMenu);
+  if (langs.length > 0) filters.languages = langs;
+  return filters;
+}
+
+function applyAddCardFilters(cards) {
+  const filters = getAddCardFilters();
+  if (!filters.versions && !filters.set_codes) return cards;
+
+  return cards.filter((card) => {
+    // Version filter (OR logic)
+    if (filters.versions) {
+      const tags = (card.variant_tags || []).map((t) => t.toLowerCase());
+      const matches = filters.versions.some((v) => {
+        if (v === "regular") return !card.is_foil_variant && tags.length === 0;
+        if (v === "foil") return card.is_foil_variant;
+        return tags.some((t) => t.toLowerCase() === v.toLowerCase());
+      });
+      if (!matches) return false;
+    }
+
+    // Set filter (OR logic)
+    if (filters.set_codes && !filters.set_codes.includes(card.set_code)) {
+      return false;
+    }
+
+    return true;
+  });
+}
+
+function getAddCardLanguage() {
+  const langs = getCheckedValues(addFilterLangMenu);
+  return langs.length > 0 ? langs[0] : "EN";
+}
+
+function rerunAddCardsSearch() {
+  const query = searchInput.value.trim();
+  if (query) doSearch(query);
+}
+
+function populateAddCardSetFilter() {
+  addFilterSetMenu.innerHTML = "";
+  for (const [code, setInfo] of cachedSetsMap) {
+    if (setInfo.active === false) continue;
+    const label = document.createElement("label");
+    label.innerHTML = `<input type="checkbox" value="${escapeHtml(code)}"> ${escapeHtml(setInfo.set_name)} (${escapeHtml(code)})`;
+    addFilterSetMenu.appendChild(label);
+  }
 }
 
 async function populateCheckoutFilters() {
