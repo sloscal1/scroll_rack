@@ -15,16 +15,21 @@ You'll need to login through the the Account area so the extension can interact 
 ### Key Features
 
 - **Fast Card Entry**: Search cached sets and add cards to your EchoMTG inventory with a single keystroke. Physical location notes are automatically attached and stored remotely.
-![Adding Kirol, Attentive First-Year to box 1 position 2 after filtering to Extended Art, and typing KA.](./imgs/AddCard.png)
+
+<img src="./imgs/AddCard.png" alt="Adding Kirol, Attentive First-Year to box 1 position 2 after filtering to Extended Art, and typing KA." width="200px">
+
 
 - **Focused Searching**: Instead of searching a remote database, key card details are cached locally for an efficient search.
-![Pulling in Edge of Eternitites to our local browser storage.](./imgs/SetCache.png)
+
+<img src="./imgs/SetCache.png" alt="Pulling in Edge of Eternities to our local browser storage." width="200px">
 
 - **Inventory Search**: Import your EchoMTG CSV and search by name, set, language, or card version (foil, borderless, etc.).
-![Moving Sliver Gravemother from its current position to deck 1 position 4](./imgs/Move.png)
+
+<img src="./imgs/Move.png" alt="Moving Sliver Gravemother from its current position to deck 1 position 4" width="200px">
 
 - **Retrieval Plans**: Building a deck? Generate a pick list organized by storage location so you can efficiently gather cards.
-![Viewing deck 1 built on 2026-02-07 so we can find all the cards to move into the deck](./imgs/RetrievalPlans.png)
+
+<img src="./imgs/RetrievalPlans.png" alt="Viewing deck 1 built on 2026-02-07 so we can find all the cards to move into the deck" width="200px">
 
 
 ### How It Works
@@ -41,7 +46,7 @@ You'll need to login through the the Account area so the extension can interact 
 
 ### Privacy
 
-All data stays on your device and your EchoMTG account. We don't collect analytics or share data with third parties. See our privacy policy for details.
+All data stays on your device and your EchoMTG account. We don't collect analytics or share data with third parties. See our [privacy policy](./privacy.md) for details.
 
 ---
 
